@@ -32,6 +32,7 @@ App de una página, en español de Colombia, para armar muebles de melamina (Mad
   p:3,                   // página del plano (número, "A1" armario, "B1" manual de la cama)
   ids:"12771 …",         // ID único de Madecentro o código del fabricante
   inf:1,                 // opcional: despiece inferido (no venía en el plano)
+  vidrio:1,              // opcional: no es melamina (espejo): no entra en Corte ni en costos
   w:"Dónde va y cómo reconocerla…" }
 ```
 
@@ -47,7 +48,7 @@ Devuelve una lista de cajas `{ id, b:[x0,x1, y0,y1, z0,z1], … }` en **milímet
 - `y` = alto, desde el piso.
 - `z` = profundidad, **desde la pared (0) hacia el cuarto**; los frentes quedan en las `z` más altas.
 
-Banderas de cada caja: `g` (cajón al que pertenece: se mueve +z al abrir), `front` (frente o puerta), `door` + `hinge:"L"|"R"` (puerta y lado de la bisagra), `zone`, `sub:1` (trozo extra de una pieza con cajeado: no cuenta como pieza), `approx:1`.
+Banderas de cada caja: `g` (cajón al que pertenece: se mueve +z al abrir), `front` (frente o puerta), `door` + `hinge:"L"|"R"` (puerta y lado de la bisagra), `side:1` + `pv:{x,z}` (puerta lateral: gira 90° sobre un eje vertical en `pv`, como la del espejo del armario), `zone`, `sub:1` (trozo extra de una pieza con cajeado: no cuenta como pieza), `approx:1`.
 
 **Camas:** las piezas con `bed:1` se modelan con la cama **abierta** (acostada); cerrada = girada −90° sobre el eje `BED_PIVOT` (`y 296, z 270`). `bedClosedBox()` da la caja cerrada. Las piezas con `desk:1` (escritorio) no giran: se trasladan igual que el pasador `DESK.H` (paralelogramo), con `deskDelta(ángulo)`.
 

@@ -15,6 +15,7 @@ function lum(hex){ const c=new THREE.Color(hex); return c.r*.3+c.g*.59+c.b*.11; 
 function cantoColor(m,s){ return lum(pieceColor(m,s))<.35 ? CANTO_CLARO : CANTO_OSCURO; }
 function edgeHex(m,s){ const c=new THREE.Color(pieceColor(m,s)); return (c.r*.3+c.g*.59+c.b*.11)<.35 ? 0x1b120c : 0x4a3d2e; }
 function pieceColor(m,s){
+  if(byId[s.id]?.vidrio) return "#e4edf2";   // espejo: claro y algo brillante (el visor no calcula reflejos)
   const x=byId[s.id], w=WOOD[m];
   if(x.d[2]===6) return w.thin;
   if(s.front) return w.front;
@@ -74,9 +75,10 @@ function load3D(m){
   spec.forEach(s=>{
     const b=s.b, w=(b[1]-b[0])*S, h=(b[3]-b[2])*S, d=(b[5]-b[4])*S;
     const geo=new THREE.BoxGeometry(w,h,d);
-    const mat=new THREE.MeshStandardMaterial({color:pieceColor(m,s), roughness:.8, metalness:0, transparent:true, opacity:1});
+    const glass=!!byId[s.id]?.vidrio;
+    const mat=new THREE.MeshStandardMaterial({color:pieceColor(m,s), roughness:glass?.18:.8, metalness:glass?.25:0, transparent:true, opacity:1});
     let edgeMat=null, matArg=mat;
-    if(WOOD[m].cantos){   // caras grandes = color de la tabla; las 4 caras delgadas (cantos) = color contrario
+    if(WOOD[m].cantos && !glass){   // caras grandes = color de la tabla; las 4 caras delgadas (cantos) = color contrario
       edgeMat=new THREE.MeshStandardMaterial({color:cantoColor(m,s), roughness:.7, metalness:0, transparent:true, opacity:1});
       const dims=[w,h,d], ti=dims.indexOf(Math.min(...dims));
       matArg=[0,1,2,3,4,5].map(f=>Math.floor(f/2)===ti?mat:edgeMat);
@@ -125,7 +127,7 @@ function resetCam(){
   cam.position.copy(V3.controls.target).addScaledVector(dir,dist);
   V3.controls.maxDistance=dist*2.2; V3.controls.update();
 }
-const DOORS = {cama5:[{k:"cama",n:"Cama (bajar / subir)"}], cama:[{k:"cama",n:"Cama (bajar / subir)"}], cama2:[{k:"cama",n:"Cama (bajar / subir)"}], cama3:[{k:"cama",n:"Cama (bajar / subir)"}], cama4:[{k:"cama",n:"Cama (bajar / subir)"}], armario:[{k:"a-p1",n:"Puerta 1 (izquierda)"},{k:"a-p2",n:"Puerta 2"},{k:"a-p3",n:"Puerta 3"},{k:"a-p4",n:"Puerta 4 (derecha)"}], cocina:[{k:"c-pi",n:"Puerta izquierda (412)"},{k:"c-pd",n:"Puerta derecha (404,5)"}], tv:[{k:"t-pi",n:"Puerta izquierda de la despensa"},{k:"t-pd",n:"Puerta derecha de la despensa"}]};
+const DOORS = {cama5:[{k:"cama",n:"Cama (bajar / subir)"}], cama:[{k:"cama",n:"Cama (bajar / subir)"}], cama2:[{k:"cama",n:"Cama (bajar / subir)"}], cama3:[{k:"cama",n:"Cama (bajar / subir)"}], cama4:[{k:"cama",n:"Cama (bajar / subir)"}], armario:[{k:"a-p5",n:"Puerta lateral (espejo)"},{k:"a-p1",n:"Puerta 1 (izquierda)"},{k:"a-p2",n:"Puerta 2"},{k:"a-p3",n:"Puerta 3"},{k:"a-p4",n:"Puerta 4 (derecha)"}], cocina:[{k:"c-pi",n:"Puerta izquierda (412)"},{k:"c-pd",n:"Puerta derecha (404,5)"}], tv:[{k:"t-pi",n:"Puerta izquierda de la despensa"},{k:"t-pd",n:"Puerta derecha de la despensa"}]};
 const DOOR_ANGLE = 100*Math.PI/180;
 const DOOR_FOR = {"a-p4":/^ai/}; // puerta que hay que abrir para sacar esos cajones
 // V3.pos[k] = 0..1 (0 cerrado, 1 abierto). Si no hay valor, manda el estado abierto/cerrado de siempre.
@@ -133,13 +135,17 @@ function doorFrac(k){ const re=DOOR_FOR[k], auto=!!re && (V3.open || [...V3.open
   const f=V3.pos?.[k] ?? (V3.doorSet.has(k)?1:0); return auto?1:f; }
 function drawerFrac(g, spec){ if(V3.open || (V3.area && AREA_BY_KEY[V3.area]?.drawer && AREA_BY_KEY[V3.area].t(spec))) return 1; return V3.pos?.[g] ?? (V3.openSet.has(g)?1:0); }
 function doorIsOpen(k){ if(V3.pos?.[k]!=null) return V3.pos[k]>0.5 || doorFrac(k)>0.5; if(V3.doorSet.has(k)) return true; const re=DOOR_FOR[k]; return !!re && (V3.open || [...V3.openSet].some(g=>re.test(g)) || (V3.area && re.test(V3.area))); }
-function doorRot(u){ if(!u.spec?.door || u.spec.bed) return 0; const f=doorFrac(u.spec.door); return f ? (u.spec.hinge==="L"?-DOOR_ANGLE:DOOR_ANGLE)*f : 0; }
+function doorRot(u){ if(!u.spec?.door || u.spec.bed) return 0; const f=doorFrac(u.spec.door); if(!f) return 0;
+  if(u.spec.side) return Math.PI/2*f;   // puerta lateral: abre 90° hasta quedar contra la pared
+  return (u.spec.hinge==="L"?-DOOR_ANGLE:DOOR_ANGLE)*f; }
 function targetOf(o){
   const u=o.userData, t=u.base.clone();
   const phi=doorRot(u);
   if(phi){ // gira sobre la bisagra: canto del lado de la bisagra, cara de atrás de la puerta
-    const sx=u.spec.hinge==="L"?1:-1, vx=sx*u.hw, vz=u.hd;
-    const px=u.base.x - vx, pz=u.base.z - vz;
+    const sx=u.spec.hinge==="L"?1:-1;
+    // eje: el que diga la pieza (pv, en mm) o el canto de la bisagra en la cara de atrás de la puerta
+    const px=u.spec.pv?(u.spec.pv.x-V3.C[0])*0.001:u.base.x-sx*u.hw, pz=u.spec.pv?(u.spec.pv.z-V3.C[2])*0.001:u.base.z-u.hd;
+    const vx=u.base.x-px, vz=u.base.z-pz;
     t.x=px + vx*Math.cos(phi) + vz*Math.sin(phi); t.z=pz - vx*Math.sin(phi) + vz*Math.cos(phi);
   }
   if(V3.explode>0){ const dir=u.base.clone(); dir.y-= (V3.H||.85)/2; t.addScaledVector(dir, V3.explode*0.9); if(u.front) t.z+=V3.explode*0.25; }
@@ -327,7 +333,7 @@ function renderInfo3D(){
     el.innerHTML=`<div class="v3sel"><div class="v3name">Herrajes</div><div class="spec">
       <div class="srow"><span class="k">Tubos de colgar</span><span class="v">2: uno de ~431 mm en el módulo izquierdo (bajo la repisa de arriba) y uno de ~877 mm en el central.</span></div>
       <div class="srow"><span class="k">Patas</span><span class="v">De 6 cm, como dice el plano. En el 3D van 6 (esquinas y centro); el número real depende del kit.</span></div>
-      <div class="srow"><span class="k">Bisagras</span><span class="v">4 por puerta (puertas de 1,78 m): 16 en total.</span></div>
+      <div class="srow"><span class="k">Bisagras</span><span class="v">4 de parche o semiparche por puerta del frente (puertas de 1,78 m) y 5 de parche en la puerta lateral del espejo: 21 en total.</span></div>
       <div class="srow"><span class="k">Rieles</span><span class="v">9 pares de 45 cm: 6 para los cajones de abajo y 3 para los interiores.</span></div>
     </div><div class="row"><button class="btn sm" type="button" id="v3clear">Quitar selección</button></div></div>`;
     $("#v3clear").onclick=()=>select3D(null);

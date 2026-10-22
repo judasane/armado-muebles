@@ -31,6 +31,7 @@ const AREAS = {
     {k:"a-der", n:"Módulo derecho (repisas y cajones)", t:s=>s.zone==="der"},
     {k:"a-bajo", n:"Parte baja: 6 cajones", t:s=>s.zone==="bajo"},
     {k:"a-est", n:"Estructura (cuerpo del armario)", t:s=>s.zone==="est"},
+    {k:"a-lat", n:"Módulo lateral con espejo (derecha)", t:s=>s.zone==="lat"},
     {k:"a-front", n:"Puertas y frentes", t:s=>!!s.front},
   ],
   cama2: [
@@ -219,6 +220,13 @@ function buildModel(m){
       A("a-cco",[bx+9,bx+575.6,by+8,by+14,44,476],{g,zone:"bajo"});
       A("a-ccf",[598,1202,fy,fy+192,500,515],{g,front:1,zone:"bajo"}); });
     // 4 puertas: las de los lados abren hacia afuera, las del centro hacia los lados
+    // módulo lateral a la derecha: 28 cm de ancho, entrepaños de 25 cm y puerta con espejo que abre hacia la derecha (bisagras del lado de la pared)
+    A("a-mlc",[1800,2065,0,2170,0,15],{zone:"lat"}); A("a-mlc",[1800,2065,0,2170,485,500],{zone:"lat"});
+    A("a-mlt",[1800,2065,0,15,15,485],{zone:"lat"}); A("a-mlt",[1800,2065,2155,2170,15,485],{zone:"lat"});
+    const gap=(2140-6*15)/7; for(let k=1;k<=6;k++){ const y=15+k*gap+(k-1)*15; A("a-mle",[1800,2050,y,y+15,15,485],{zone:"lat"}); }
+    const pv={x:2080,z:1.5};   // eje de las bisagras de la puerta lateral
+    A("a-mlp",[2065,2080,1,2169,1.5,498.5],{front:1,door:"a-p5",side:1,pv,zone:"lat"});
+    A("a-mlx",[2080,2084,185,1985,50.5,450.5],{front:1,door:"a-p5",side:1,pv,zone:"lat"});
     [[0,"a-p1","L"],[450.75,"a-p2","L"],[901.5,"a-p3","R"],[1352.25,"a-p4","R"]].forEach(([x,k,h])=>A("a-puerta",[x,x+447.75,392,2169,500,515],{front:1,door:k,hinge:h,zone:k==="a-p1"?"izq":k==="a-p4"?"der":"cen"}));
   }
   if(CAMA_CFG[m]){
@@ -386,6 +394,6 @@ function buildArmHw(){
   const P=[], part=(b,c,n)=>P.push({b,c,n,id:"__herraje"}), Y=60, steel="#9aa0a6";
   part([20,441.3,1888+Y,1912+Y,245,269],steel,"tubo");              // izquierdo, bajo la repisa de arriba
   part([466.3,1333.7,1180+Y,1204+Y,245,269],steel,"tubo");          // central
-  for(const x of [25,880,1735]) for(const z of [25,435]) part([x,x+40,0,Y,z,z+40],"#2b2b2b","pata");
+  for(const x of [25,880,1735,2010]) for(const z of [25,435]) part([x,x+40,0,Y,z,z+40],"#2b2b2b","pata");
   return P;
 }

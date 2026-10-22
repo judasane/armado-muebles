@@ -113,8 +113,8 @@ function reviewDesign(m){
   const nm=s=>byId[s.id].n;
   // 1. luz entre frentes/puertas y lo que tienen al lado (en el mismo plano)
   const F=L.filter(s=>s.front), seen=new Set();
-  F.forEach(f=>L.forEach(q=>{
-    if(q===f || (q.g && q.g===f.g) || ov(f.b,q.b,4)<=0.5) return;
+  F.filter(f=>!f.side).forEach(f=>L.forEach(q=>{   // la puerta lateral tapa los cantos del módulo: se revisa aparte
+    if(q===f || q.side || (q.g && q.g===f.g) || ov(f.b,q.b,4)<=0.5) return;
     if(q.front && seen.has(q.uid+"|"+f.uid)) return;
     const k=f.uid+"|"+q.uid; seen.add(k);
     for(const [ax,o] of [[0,2],[2,0]]){
@@ -172,7 +172,7 @@ const COT = {
   flete:50000
 };
 // material de cada pieza según el color: TV cuerpo = Milán; cocina toda en Tivoli; fondos 6 mm
-function costMat(x){ if(x.d[2]===6) return "t6"; if(x.m==="cocina") return "tivoli"; return isFrontPc(x) || (/caj/i.test(x.g) && x.id!=="a-supl" && x.m==="tv") ? "tivoli" : "milan"; }
+function costMat(x){ if(x.vidrio) return null; if(x.d[2]===6) return "t6"; if(x.m==="cocina") return "tivoli"; return isFrontPc(x) || (/caj/i.test(x.g) && x.id!=="a-supl" && x.m==="tv") ? "tivoli" : "milan"; }
 function costArea(m,k){ return P.filter(x=>x.m===m && costMat(x)===k).reduce((a,x)=>a+x.d[0]*x.d[1]*x.q,0)/1e6; }
 const pesos = v => "$"+Math.round(v).toLocaleString("es-CO");
 function costReal(m){
@@ -187,7 +187,7 @@ function costReal(m){
 }
 function costArmario(){
   const cfg={BW:2440, BH:2150, kerf:CUT.kerf, trim:CUT.trim, rot:!CUT.veta, minFree:30, iters:40};
-  const g={}; P.filter(x=>x.m==="armario").forEach(x=>{ const k=costMat(x); for(let i=0;i<x.q;i++)(g[k]=g[k]||[]).push({id:x.id,L:x.d[0],W:x.d[1]}); });
+  const g={}; P.filter(x=>x.m==="armario" && !x.vidrio).forEach(x=>{ const k=costMat(x); for(let i=0;i<x.q;i++)(g[k]=g[k]||[]).push({id:x.id,L:x.d[0],W:x.d[1]}); });
   const rows=[]; let mat=0;
   for(const k of ["milan","tivoli","t6"]){ if(!g[k] || (k==="t6" && !CUT.fondos)) continue;
     const c=COT.mat[k], n=optimizeCut(g[k],cfg).sheets.length, a=costArea("armario",k), rate=c.extra/(costArea("cocina",k)+costArea("tv",k));
@@ -241,7 +241,7 @@ function renderCut(){
   document.querySelectorAll("[data-bsz]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.bsz===`${Math.max(CUT.BW,CUT.BH)}x${Math.min(CUT.BW,CUT.BH)}`));
   const cfg={BW:Math.max(CUT.BW,CUT.BH), BH:Math.min(CUT.BW,CUT.BH), kerf:CUT.kerf, trim:CUT.trim, rot:!CUT.veta, minFree:30, iters:60};
   const groups={};
-  P.filter(x=>x.m===m && !x.same && !x.recorte).forEach(x=>{ const d=x.cut||x.d, k=cutMat(x);
+  P.filter(x=>x.m===m && !x.same && !x.recorte && !x.vidrio).forEach(x=>{ const d=x.cut||x.d, k=cutMat(x);
     for(let i=0;i<x.q;i++) (groups[k]=groups[k]||[]).push({id:x.id, L:d[0], W:d[1]}); });
   const order=["cuerpo","frente","fondo"].filter(k=>groups[k] && (k!=="fondo"||CUT.fondos));
   const UA=cfg.BW*cfg.BH;
