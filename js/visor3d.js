@@ -331,9 +331,10 @@ function renderInfo3D(){
   if(V3.sel==="__herraje"){
     tag.hidden=false; tag.innerHTML=`<b>Herrajes del armario</b><span class="dims">no son piezas de madera</span>`; tag.onclick=null;
     el.innerHTML=`<div class="v3sel"><div class="v3name">Herrajes</div><div class="spec">
-      <div class="srow"><span class="k">Tubos de colgar</span><span class="v">2: uno de ~431 mm en el módulo izquierdo (bajo la repisa de arriba) y uno de ~877 mm en el central.</span></div>
+      <div class="srow"><span class="k">Tubos de colgar</span><span class="v">2: uno de ~330 mm en el módulo izquierdo (bajo la repisa de arriba) y uno de ~776 mm en el central.</span></div>
       <div class="srow"><span class="k">Patas</span><span class="v">De 6 cm, como dice el plano. En el 3D van 6 (esquinas y centro); el número real depende del kit.</span></div>
-      <div class="srow"><span class="k">Bisagras</span><span class="v">4 de parche o semiparche por puerta del frente (puertas de 1,78 m) y 5 de parche en la puerta lateral del espejo: 21 en total.</span></div>
+      <div class="srow"><span class="k">Bisagras</span><span class="v">4 por puerta del frente (parche en la izquierda, semiparche en las otras 3) y 4 de parche en la puerta lateral del espejo: 20 en total.</span></div>
+      <div class="srow"><span class="k">Ganchos</span><span class="v">5 en la columna lateral, atornillados a la división con tornillo de 12 mm (no la atraviesa): 2 arriba para sombreros, a 2,08 m del piso, y 3 para bolsos, a 1,66 m. Que salgan unos 7 cm: con 25 cm de fondo, el bolso o el sombrero cuelga plano contra el lateral.</span></div>
       <div class="srow"><span class="k">Rieles</span><span class="v">9 pares de 45 cm: 6 para los cajones de abajo y 3 para los interiores.</span></div>
     </div><div class="row"><button class="btn sm" type="button" id="v3clear">Quitar selección</button></div></div>`;
     $("#v3clear").onclick=()=>select3D(null);
