@@ -15,6 +15,7 @@ function lum(hex){ const c=new THREE.Color(hex); return c.r*.3+c.g*.59+c.b*.11; 
 function cantoColor(m,s){ return lum(pieceColor(m,s))<.35 ? CANTO_CLARO : CANTO_OSCURO; }
 function edgeHex(m,s){ const c=new THREE.Color(pieceColor(m,s)); return (c.r*.3+c.g*.59+c.b*.11)<.35 ? 0x1b120c : 0x4a3d2e; }
 function pieceColor(m,s){
+  { const k=MATSEL[s.id]; if(k && MATERIALES[k] && canPickMat(byId[s.id])) return MATERIALES[k].c; }
   if(byId[s.id]?.vidrio) return "#e4edf2";   // espejo: claro y algo brillante (el visor no calcula reflejos)
   const x=byId[s.id], w=WOOD[m];
   if(x.d[2]===6) return w.thin;
@@ -427,6 +428,7 @@ function renderInfo3D(){
     ${(()=>{ const own=V3.inst&&V3.inst.g?AREAS[x.m].find(a=>a.drawer&&a.t(V3.inst)):null; return own?`<button class="btn sm" type="button" data-dr="${own.k}" style="align-self:flex-start">${V3.openSet.has(own.k)||V3.open?"Cerrar":"Abrir"} este cajón</button>`:""; })()}
     ${(()=>{ const own=V3.inst&&V3.inst.g?AREAS[x.m].find(a=>a.drawer&&a.t(V3.inst)):null; return own?`<button class="btn sm info" type="button" data-area="${own.k}" style="align-self:flex-start">Esta es del ${esc(own.n)} · ver el cajón completo</button>`:""; })()}
     <p style="margin:0">${esc(x.w)}</p>
+    ${matPickerHTML(x)}
     ${specHTML(x)}
     <div class="row">
       <button class="btn sm info" type="button" id="v3ficha">Ver ficha y plano</button>
@@ -434,6 +436,7 @@ function renderInfo3D(){
       <button class="btn sm" type="button" id="v3clear">Quitar selección</button>
     </div></div>`;
   $("#v3ficha").onclick=()=>openPiece(x.id);
+  wireMat(el, renderInfo3D);
   el.querySelectorAll("[data-area]").forEach(b=>b.onclick=()=>selectArea3D(b.dataset.area,true));
   el.querySelectorAll("[data-dr]").forEach(b=>b.onclick=()=>toggleDrawer(b.dataset.dr));
   el.querySelectorAll("[data-door]").forEach(b=>b.onclick=()=>toggleDoor(b.dataset.door));

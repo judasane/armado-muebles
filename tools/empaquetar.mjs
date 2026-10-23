@@ -10,8 +10,8 @@ const read = f => readFileSync(path.join(root, f), "utf8");
 const dataUri = f => "data:image/jpeg;base64," + readFileSync(path.join(root, f)).toString("base64");
 
 let html = read("index.html");
-html = html.replace('<link rel="stylesheet" href="css/app.css">', () => `<style>\n${read("css/app.css")}</style>`);
-html = html.replace(/<script src="(js\/[\w-]+\.js)"><\/script>/g, (_, f) => {
+html = html.replace(/<link rel="stylesheet" href="css\/app\.css(?:\?v=\w+)?">/, () => `<style>\n${read("css/app.css")}</style>`);
+html = html.replace(/<script src="(js\/[\w-]+\.js)(?:\?v=\w+)?"><\/script>/g, (_, f) => {
   let js = read(f);
   if (f === "js/catalogo.js") js = js.replace(/"(assets\/planos\/[\w-]+\.jpg)"/g, (_, img) => JSON.stringify(dataUri(img)));
   return `<script>\n${js.replace(/<\/script/gi, "<\\/script")}</script>`;

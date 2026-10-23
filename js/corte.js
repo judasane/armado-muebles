@@ -67,18 +67,55 @@ const MATN = {
   armario:{cuerpo:"Milán (oscuro)", frente:"Tivoli (claro)", fondo:"Fondos 6 mm", junto:"Tablero 15 mm"},
   cocina:{cuerpo:"Cuerpo", frente:"Frentes y puertas", fondo:"Fondos 6 mm", junto:"Tablero 15 mm (cuerpo y frentes)"},
   tv:{cuerpo:"Cuerpo (oscuro)", frente:"Frentes y puertas (claro)", fondo:"Fondos 6 mm", junto:"Tablero 15 mm (cuerpo y frentes)"} };
+// Material por pieza (cocina, TV y armario). La elección vive en este navegador: MATSEL[id de pieza] = clave.
+const MATERIALES = {
+  milan:{n:"Milán (oscuro)", c:"#5a4030"},
+  tivoli:{n:"Tivoli (claro)", c:"#ece2cf"},
+  wengue:{n:"Wengue (muy oscuro, Homecenter)", c:"#33261d"},
+  t6:{n:"Fondos 6 mm", c:"#c9bda6"}
+};
+const MAT_ELEGIBLES = ["milan","tivoli","wengue"];
+let MATSEL = {};
+try{ MATSEL = JSON.parse(localStorage.getItem(LS+"-mat")||"{}")||{}; }catch{}
+const canPickMat = x => !!x && ["cocina","tv","armario"].includes(x.m) && !x.vidrio && (x.cut||x.d)[2]>6;
+// material por defecto: el del diseño (frentes y cajas según el color de cada mueble), o todo el mismo si los frentes no van aparte
+function defMat(x){
+  if((x.cut||x.d)[2]<=6) return "t6";
+  const body = x.m==="cocina" ? "tivoli" : "milan";
+  if(x.m==="cocina" || !cutSep(x.m)) return body;
+  if(isFrontPc(x)) return "tivoli";
+  if(/caj/i.test(x.g) && x.id!=="a-supl"){ const w=WOOD[x.m]; return Math.abs(cutLum(w.box)-cutLum(w.front)) < Math.abs(cutLum(w.box)-cutLum(w.carc)) ? "tivoli" : "milan"; }
+  return "milan";
+}
+const matOf = x => (canPickMat(x) && MATSEL[x.id]) || defMat(x);
+function setMat(id, k){
+  if(k) MATSEL[id]=k; else delete MATSEL[id];
+  try{ localStorage.setItem(LS+"-mat", JSON.stringify(MATSEL)); }catch{}
+  if(V3.ready && V3.group) look3D();
+  if(!$("#v-cut").hidden) renderCut();
+}
+function matPickerHTML(x){
+  if(!canPickMat(x)) return "";
+  const cur=matOf(x), own=!!MATSEL[x.id];
+  return `<div class="matpick"><div class="lbl">Material / color${x.q>1?` (las ${x.q})`:""}</div>
+    <div class="seg" role="group" aria-label="Material de ${esc(x.n)}">${MAT_ELEGIBLES.map(k=>`<button type="button" data-mat="${k}" data-mat-id="${x.id}" aria-pressed="${cur===k}"><span class="sw" style="--f:${MATERIALES[k].c}"></span>${esc(MATERIALES[k].n.split(" (")[0])}</button>`).join("")}</div>
+    <p class="hint">${own?`Cambiado por ti · <button class="linkbtn" type="button" data-mat="" data-mat-id="${x.id}">volver al del diseño (${esc(MATERIALES[defMat(x)].n.split(" (")[0])})</button>`:"Es el del diseño."} Cambia el color en el 3D, el tablero en Corte y el costo.</p></div>`;
+}
+function wireMat(root, after){ root.querySelectorAll("[data-mat-id]").forEach(b=>b.onclick=()=>{ setMat(b.dataset.matId, b.dataset.mat); after&&after(); }); }
 const cutLum = hex => { const n=parseInt(hex.slice(1),16); return ((n>>16)*.3+((n>>8)&255)*.59+(n&255)*.11)/255; };
 const cutSep = m => CUT.sep[m] ?? Math.abs(cutLum(WOOD[m].carc)-cutLum(WOOD[m].front))>.15;
 const isFrontPc = x => /puerta|frente|panel|-cbf$|-ccf$|-cif$/.test(x.id);
 function cutMat(x){
+  if(canPickMat(x)) return matOf(x);   // cocina, TV y armario: se agrupa por material
   const d=x.cut||x.d; if(d[2]<=6) return "fondo";
   if(!cutSep(x.m)) return "cuerpo";
   if(isFrontPc(x)) return "frente";
   if(/caj/i.test(x.g) && x.id!=="a-supl"){ const w=WOOD[x.m]; return Math.abs(cutLum(w.box)-cutLum(w.front)) < Math.abs(cutLum(w.box)-cutLum(w.carc)) ? "frente" : "cuerpo"; }
   return "cuerpo";
 }
-const matName = (m,k) => k==="cuerpo" && !cutSep(m) ? MATN[m].junto : MATN[m][k];
-const matFill = (m,k) => k==="fondo" ? WOOD[m].thin : k==="frente" ? WOOD[m].front : WOOD[m].carc;
+const matName = (m,k) => MATERIALES[k] ? MATERIALES[k].n : k==="cuerpo" && !cutSep(m) ? MATN[m].junto : MATN[m][k];
+const matFill = (m,k) => MATERIALES[k] ? MATERIALES[k].c : k==="fondo" ? WOOD[m].thin : k==="frente" ? WOOD[m].front : WOOD[m].carc;
+const isThin = k => k==="fondo" || k==="t6";
 const cm = mm => fmt(Math.round(mm)/10);
 const LAST_CUT = {};
 
@@ -165,7 +202,8 @@ const COT = {
   mat:{
     milan:{n:"Pelikano Milán 15 mm", s:"Milán", board:515749.77, q:1, extra:19640.72+5354.31+41030.31+2.34+12236.44+2998.80},
     tivoli:{n:"Pelikan RH Tivoli 2 caras 15 mm", s:"Tivoli 15 mm", board:1185665.28/2, q:2, extra:17214.06+42423.96+78941.24+5354.31+8149.80+87473.44+72950.06+2.34+68174.43+7456.16+27943.20},
-    t6:{n:"Pelikan RH Tivoli 1 cara 6 mm", s:"Tivoli 6 mm", board:326975.31, q:1, extra:2.34+2.34}
+    t6:{n:"Pelikan RH Tivoli 1 cara 6 mm", s:"Tivoli 6 mm", board:326975.31, q:1, extra:2.34+2.34},
+    wengue:{n:"Vesto Wengue 15 mm (Homecenter)", s:"Wengue", board:215900, q:0, extra:0}   // precio de Homecenter; cantos con la tarifa del Milán
   },
   hw:{ r400:{n:"Riel push to open 45 × 400", q:4, v:113737.42, m:"tv"}, r550:{n:"Riel push to open 45 × 550", q:6, v:226967.15, m:"cocina"},
        push:{n:"Dispositivos push to open (160 y 237)", q:5, v:3631.59+12362.39, m:"mitad"}, bis:{n:"Bisagras 897 clip 35 mm", q:4, v:40579.57+21299.69+21299.69, m:"mitad"} },
@@ -189,10 +227,10 @@ function costReal(m){
 // por tablero de 2,15 × 2,44: con otro tamaño se ajusta por área.
 function costArmario(res, cfg){
   const ref=2440*2150, f=(cfg.BW*cfg.BH)/ref, sep=cutSep("armario"), rows=[]; let mat=0;
-  const rateOf=k=>COT.mat[k].extra/(costArea("cocina",k)+costArea("tv",k));
+  const rateOf=k=>k==="wengue" ? rateOf("milan") : COT.mat[k].extra/(costArea("cocina",k)+costArea("tv",k));
   for(const x of res){
-    const key = x.k==="fondo" ? "t6" : x.k==="frente" ? "tivoli" : "milan", c=COT.mat[key], price=c.board*f, a=x.area/1e6, rate=rateOf(key);
-    const name = x.k==="cuerpo" && !sep ? `${c.n} (frentes en el mismo tablero)` : c.n;
+    const key = COT.mat[x.k] ? x.k : x.k==="fondo" ? "t6" : x.k==="frente" ? "tivoli" : "milan", c=COT.mat[key], price=c.board*f, a=x.area/1e6, rate=rateOf(key);
+    const name = c.n;
     rows.push([name, `${x.n} tablero${x.n>1?"s":""} de ${cm(cfg.BW)} × ${cm(cfg.BH)} cm × ${pesos(price)}${f!==1?` (precio de 2,15 × 2,44 ajustado por área)`:""}`, x.n*price],
               [`Cantos y servicios · ${c.s}`, `${fmt(a.toFixed(2))} m² × ${pesos(rate)}/m², lo que costó por m² en la cocina y el TV`, a*rate]);
     mat+=x.n*price+a*rate;
@@ -255,10 +293,10 @@ function renderCut(){
   const groups={};
   P.filter(x=>x.m===m && !x.same && !x.recorte && !x.vidrio).forEach(x=>{ const d=x.cut||x.d, k=cutMat(x);
     for(let i=0;i<x.q;i++) (groups[k]=groups[k]||[]).push({id:x.id, L:d[0], W:d[1]}); });
-  const order=["cuerpo","frente","fondo"].filter(k=>groups[k] && (k!=="fondo"||CUT.fondos));
+  const order=["milan","wengue","tivoli","cuerpo","frente","t6","fondo"].filter(k=>groups[k] && (!isThin(k)||CUT.fondos));
   const UA=cfg.BW*cfg.BH;
   const res=order.map(k=>{ const ps=groups[k], r=optimizeCut(ps,cfg), area=ps.reduce((a,p)=>a+p.L*p.W,0);
-    return {k, ps, r, area, n:r.sheets?.length||0, thick:k==="fondo"?(/^cama/.test(m)?3:6):15}; });
+    return {k, ps, r, area, n:r.sheets?.length||0, thick:isThin(k)?(/^cama/.test(m)?3:6):15}; });
   LAST_CUT.m=m; LAST_CUT.res=res; LAST_CUT.cfg=cfg;
   const bad=res.find(x=>x.r.error);
   if(bad){ $("#cutBody").innerHTML=`<div class="card"><p><b>! Hay piezas que no caben en un tablero de ${cm(cfg.BW)} × ${cm(cfg.BH)} cm</b> con ese refilado${CUT.veta?" y respetando la veta":""}. Revisa las medidas del tablero.</p></div>`; return; }
@@ -293,9 +331,21 @@ function renderCut(){
     h+=`</div>`;
   });
   h=h.replace('<div class="card cutgrp">', costHTML(m, res, cfg)+'<div class="card cutgrp">');
+  const pick=P.filter(x=>x.m===m && canPickMat(x));
+  if(pick.length){ const own=pick.filter(x=>MATSEL[x.id]).length;
+    h=h.replace('<div class="card cutgrp">', `<details class="card matlist" ${CUT.matOpen?"open":""}><summary>Material por pieza ${own?`· ${own} cambiada${own>1?"s":""} por ti`:""}</summary>
+      <p class="hint">Escoge el material de cada pieza: el corte, los tableros y el costo se recalculan. Se guarda en este navegador.</p>
+      ${[...new Set(pick.map(x=>x.g))].map(g=>`<div class="grp-title">${esc(g)}</div>`+pick.filter(x=>x.g===g).map(x=>`<label class="matrow"><span class="sw" style="--f:${MATERIALES[matOf(x)].c}"></span><span class="mn">${esc(x.n)} ×${x.q}${MATSEL[x.id]?" <b>· tuyo</b>":""}</span>
+        <select data-msel="${x.id}" aria-label="Material de ${esc(x.n)}">${MAT_ELEGIBLES.map(k=>`<option value="${k}" ${matOf(x)===k?"selected":""}>${esc(MATERIALES[k].n)}</option>`).join("")}</select></label>`).join("")).join("")}
+      ${own?`<button class="btn sm" type="button" id="matReset">Volver todo al diseño</button>`:""}
+    </details><div class="card cutgrp">`);
+  }
   $("#cutBody").innerHTML=h;
   $("#cutBody").querySelectorAll("[data-id]").forEach(el=>{ el.onclick=()=>openPiece(el.dataset.id); if(el.tagName==="g") el.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openPiece(el.dataset.id); } }; });
   $("#cutBody").querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>cutCopy(b.dataset.copy));
+  const ml=$("#cutBody .matlist"); if(ml){ ml.ontoggle=()=>{ CUT.matOpen=ml.open; };
+    ml.querySelectorAll("[data-msel]").forEach(s=>s.onchange=()=>{ const x=byId[s.dataset.msel]; setMat(x.id, s.value===defMat(x)?"":s.value); });
+    $("#matReset")?.addEventListener("click",()=>{ P.filter(x=>x.m===m).forEach(x=>delete MATSEL[x.id]); setMat("__", ""); }); }
 }
 function cutCopy(k){
   const {m,res,cfg}=LAST_CUT, x=res.find(r=>r.k===k); if(!x) return;

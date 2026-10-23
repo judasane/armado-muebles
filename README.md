@@ -13,7 +13,7 @@ App web para armar muebles de melamina pieza por pieza: identificas cada pieza p
 | **Escanear** | Escribes las medidas de la etiqueta (la línea "1 / 1 de 532 x 370") y te dice qué pieza es, de qué mueble y dónde va. |
 | **3D** | Modelo interactivo de cada mueble. Doble toque o deslizadores para abrir puertas, cajones y la cama; ocultar piezas o conjuntos; medir en cm (distancias ortogonales entre caras, aristas o esquinas). |
 | **Despiece** | Todas las piezas con medidas, nombre en el plano, código y en qué conjunto van. |
-| **Corte** | Optimización de corte en guillotina (disco, refilado, veta, tamaño de tablero), revisión de holguras antes de cortar y costo aproximado. |
+| **Corte** | Optimización de corte en guillotina (disco, refilado, veta, tamaño de tablero), material/color por pieza, revisión de holguras antes de cortar y costo aproximado. |
 | **Planos** | Los planos originales con el ítem marcado. |
 | **Checklist** | Cuántas piezas de cada una ya encontraste. |
 
@@ -40,6 +40,10 @@ node tools/check.mjs             # revisión automática (corre también en GitH
 
 ```bash
 node tools/empaquetar.mjs        # dist/armado-muebles.html: todo en un archivo, para claude.ai
+```
+
+```bash
+node tools/sellar.mjs            # después de cambiar css/ o js/: actualiza los ?v= de index.html
 ```
 
 ### Estructura

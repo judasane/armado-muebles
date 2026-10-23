@@ -48,6 +48,7 @@ function pieceHTML(x, o={}){
       <div class="pname"><div class="lbl">Pieza</div><p class="n">${esc(x.n)}</p></div>
       ${o.conf?`<div class="conf ${o.conf}"><span class="sym">${CONF[o.conf][0]}</span><span>${CONF[o.conf][1]}${o.confText?`: ${esc(o.confText)}`:""}</span></div>`:""}
       <p class="what">${esc(x.w)}</p>
+      ${matPickerHTML(x)}
       <div class="facts">
         <div class="fact"><div class="k">Ítem plano</div><div class="v">${esc(x.it)}</div></div>
         <div class="fact"><div class="k">Cantidad</div><div class="v">×${x.q}</div></div>
@@ -78,6 +79,7 @@ function wirePiece(root, rerender){
   root.querySelectorAll("[data-fix]").forEach(b=>b.onclick=()=>openFixPicker());
   root.querySelectorAll("[data-go3d]").forEach(b=>b.onclick=()=>go3D(b.dataset.go3d));
   root.querySelectorAll("[data-area]").forEach(b=>b.onclick=()=>go3DArea(b.dataset.area));
+  wireMat(root, ()=>rerender());
 }
 function openPiece(id){
   const draw=(nid)=>{ if(nid) id=nid; $("#dlgBody").innerHTML=pieceHTML(byId[id]); wirePiece($("#dlgBody"), draw); };

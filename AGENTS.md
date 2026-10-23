@@ -12,7 +12,7 @@ App de una página, en español de Colombia, para armar muebles de melamina (Mad
 2. **Sin datos personales.** Ni nombres de clientes, teléfonos, cédulas, direcciones ni correos, tampoco dentro de las imágenes de los planos (los membretes de Madecentro los traen: hay que taparlos antes de agregar una imagen). `tools/check.mjs` busca celulares y correos en el código; las imágenes hay que revisarlas a ojo.
 3. **Funciona sin Claude.** `window.claude.use("sample")` (leer etiquetas con foto) y `window.claude.use("db")` (checklist compartido) solo existen dentro de claude.ai. Todo lo demás tiene que andar igual en GitHub Pages; el checklist cae a `localStorage` (siempre envuelto en `try/catch`).
 4. **Sin paso de compilación.** Scripts clásicos (no módulos) que comparten el ámbito global; **el orden de `<script>` en `index.html` importa**: `catalogo → ui → modelo → visor3d → medidor → corte → arranque`. Una constante solo se puede usar al cargar si está en un archivo anterior; dentro de funciones da igual.
-5. **Corre `node tools/check.mjs` antes de cada commit.** Debe terminar en "Todo bien.".
+5. **Después de tocar `css/` o `js/`, corre `node tools/sellar.mjs`** (pone `?v=<huella>` en `index.html` para que GitHub Pages no mezcle archivos viejos y nuevos) y luego **`node tools/check.mjs`**, que debe terminar en "Todo bien." (también revisa el sellado).
 
 ## Lenguaje
 
@@ -57,6 +57,10 @@ Banderas de cada caja: `g` (cajón al que pertenece: se mueve +z al abrir), `fro
 - Conjuntos: `AREAS[m] = [{ k, n, t: spec => boolean, drawer? }]`.
 
 Las funciones de `buildOven/buildElec/buildGas/buildArmHw/buildCamaHw/buildMec/buildDeskHw` arman herrajes y electrodomésticos (no son piezas del despiece; su `id` empieza por `__`).
+
+### Materiales por pieza — `js/corte.js`
+
+`MATERIALES` (Milán, Tivoli, Wengue, fondos de 6 mm) con color y nombre; `COT.mat` tiene el precio de cada uno. El material por defecto sale de `defMat(x)`; la persona puede cambiarlo por pieza (ficha, 3D y la lista "Material por pieza" de Corte) y queda en `MATSEL` (`localStorage`, clave `LS+"-mat"`). `matOf(x)` da el efectivo. Para cocina, TV y armario los tableros de Corte se agrupan por material y el costo del armario se calcula sobre esos mismos tableros; las camas siguen con su kit.
 
 ### Visor — `js/visor3d.js`
 

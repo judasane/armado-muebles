@@ -120,5 +120,9 @@ for (const f of walk(root).filter(f => /\.(html|js|css|md|json|yml|mjs)$/.test(f
 }
 if (fails === before) ok("sin celulares ni correos en el código");
 
+console.log("6. Caché");
+try { execFileSync(process.execPath, [path.join(root, "tools", "sellar.mjs"), "--check"], { stdio: "pipe" }); ok("index.html sellado (?v= al día)"); }
+catch { fail("index.html no está sellado: corre node tools/sellar.mjs"); }
+
 console.log(fails ? `\n${fails} problema(s).` : "\nTodo bien.");
 process.exit(fails ? 1 : 0);
