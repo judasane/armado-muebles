@@ -207,19 +207,19 @@ function buildModel(m){
     [407,595,783].forEach((fy,i)=>{ const g="ai"+i, y=fy+20;
       A("a-cil",[bx0,bx0+15,y,y+130,35,485],{g,zone:"der"}); A("a-cil",[bx1-15,bx1,y,y+130,35,485],{g,zone:"der"});
       A("a-cit",[bx0+15,bx1-15,y,y+130,35,50],{g,zone:"der"}); A("a-cit",[bx0+15,bx1-15,y,y+130,470,485],{g,zone:"der"});
-      A("a-cio",[bx0+9,bx1-9,y+8,y+14,44,476],{g,zone:"der"});
+      A("a-cio",[bx0+15,bx1-15,y,y+15,50,470],{g,zone:"der"});   // fondo de 15 mm entre laterales y testeros
       A("a-cif",[xr[0]+18,xr[1]-18,fy,fy+185,485,500],{g,front:1,zone:"der"}); });
     // 4 cajones de abajo con manija chaflán (frentes por delante)
     [[0,28,1,"izq"],[1,1233,1206,"der"]].forEach(([side,bx,fx])=>{ [[2,25],[197,210]].forEach(([fy,by],j)=>{ const g="ab"+(side*2+j);
       A("a-cbl",[bx,bx+15,by,by+150,35,485],{g,zone:"bajo"}); A("a-cbl",[bx+524,bx+539,by,by+150,35,485],{g,zone:"bajo"});
       A("a-cbt",[bx+15,bx+524,by,by+150,35,50],{g,zone:"bajo"}); A("a-cbt",[bx+15,bx+524,by,by+150,470,485],{g,zone:"bajo"});
-      A("a-cbo",[bx+9,bx+530,by+8,by+14,44,476],{g,zone:"bajo"});
+      A("a-cbo",[bx+15,bx+524,by,by+15,50,470],{g,zone:"bajo"});
       A("a-cbf",[fx,fx+593,fy,fy+192,500,515],{g,front:1,zone:"bajo"}); }); });
     // 2 cajones centrales en el hueco de 610 (antes espacio chimenea): caja 584,6 = 610 − 2 rieles de 12,7
     [[2,25],[197,210]].forEach(([fy,by],j)=>{ const g="ab"+(4+j), bx=607.7;
       A("a-cbl",[bx,bx+15,by,by+150,35,485],{g,zone:"bajo"}); A("a-cbl",[bx+569.6,bx+584.6,by,by+150,35,485],{g,zone:"bajo"});
       A("a-cct",[bx+15,bx+569.6,by,by+150,35,50],{g,zone:"bajo"}); A("a-cct",[bx+15,bx+569.6,by,by+150,470,485],{g,zone:"bajo"});
-      A("a-cco",[bx+9,bx+575.6,by+8,by+14,44,476],{g,zone:"bajo"});
+      A("a-cco",[bx+15,bx+569.6,by,by+15,50,470],{g,zone:"bajo"});
       A("a-ccf",[598,1202,fy,fy+192,500,515],{g,front:1,zone:"bajo"}); });
     // columna lateral: costado trasero (bisagras), 3 repisas de 25 cm abajo, ganchos arriba (buildArmHw) y puerta mirando a la derecha con espejo por dentro
     A("a-colc",[xk[0],xk[1],405,2155,0,15],{zone:"lat"});

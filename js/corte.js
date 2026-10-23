@@ -288,6 +288,7 @@ function renderCut(){
   $("#cVeta").setAttribute("aria-pressed", CUT.veta);
   $("#cSep").setAttribute("aria-pressed", cutSep(m));
   $("#cFondos").setAttribute("aria-pressed", CUT.fondos);
+  $("#cFondos").hidden = !P.some(x=>x.m===m&&!x.vidrio&&(x.cut||x.d)[2]<=6);   // el armario ya no tiene piezas delgadas
   document.querySelectorAll("[data-bsz]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.bsz===`${Math.max(CUT.BW,CUT.BH)}x${Math.min(CUT.BW,CUT.BH)}`));
   const cfg={BW:Math.max(CUT.BW,CUT.BH), BH:Math.min(CUT.BW,CUT.BH), kerf:CUT.kerf, trim:CUT.trim, rot:!CUT.veta, minFree:30, iters:60};
   const groups={};
@@ -303,7 +304,7 @@ function renderCut(){
   const tot=res.reduce((a,x)=>a+x.n,0), aP=res.reduce((a,x)=>a+x.area,0), aB=tot*UA;
   const m2=v=>fmt((v/1e6).toFixed(2));
   let h=reviewHTML(m)+`<div class="card cutsum">
-    <div class="cutbig"><span class="num">${tot}</span><span>${tot===1?"tablero":"tableros"} de ${cm(cfg.BW)} × ${cm(cfg.BH)} cm<small>${mtag(m)} · ${res.reduce((a,x)=>a+x.ps.length,0)} piezas${CUT.fondos?"":" · sin fondos de 6 mm"}</small></span></div>
+    <div class="cutbig"><span class="num">${tot}</span><span>${tot===1?"tablero":"tableros"} de ${cm(cfg.BW)} × ${cm(cfg.BH)} cm<small>${mtag(m)} · ${res.reduce((a,x)=>a+x.ps.length,0)} piezas${CUT.fondos||!P.some(x=>x.m===m&&!x.vidrio&&(x.cut||x.d)[2]<=6)?"":" · sin fondos de 6 mm"}</small></span></div>
     <div class="cutmats">${res.map(x=>`<div class="cutmat"><span class="sw ${x.k}" style="--f:${matFill(m,x.k)}"></span><b>${x.n} ×</b> ${esc(matName(m,x.k))} <span class="hint">${x.thick} mm</span></div>`).join("")}</div>
     <div class="cutstats">
       <div><span class="k">Área de piezas</span><span class="v">${m2(aP)} m²</span></div>
