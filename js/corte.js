@@ -194,8 +194,16 @@ function costArmario(){
     rows.push([c.n, `${n} tablero${n>1?"s":""} de ${COT.tablero} × ${pesos(c.board)}`, n*c.board], [`Cantos y servicios · ${c.s}`, `${fmt(a.toFixed(2))} m² × ${pesos(rate)}/m², lo que costó por m² en la cocina y el TV`, a*rate]);
     mat+=n*c.board+a*rate; }
   const rU=(COT.hw.r400.v/4 + COT.hw.r550.v/6)/2, bU=COT.hw.bis.v/COT.hw.bis.q;
-  const hw=[["Rieles push to open de 45 cm", `9 pares × ${pesos(rU)} (entre el de 40 y el de 55)`, 9*rU], ["Bisagras 897 clip 35 mm", `16 × ${pesos(bU)} (4 por puerta)`, 16*bU]];
-  return {rows, hw, flete:COT.flete, sin:mat+COT.flete, con:mat+COT.flete+hw.reduce((a,r)=>a+r[2],0), est:1};
+  // herrajes contados del diseño actual: puertas → bisagras (4 si mide más de 1,5 m), cajones → pares de rieles, ganchos y espejos
+  const L=buildModel("armario").filter(s=>!s.sub), isGlass=s=>!!byId[s.id]?.vidrio;
+  const doors=[...new Set(L.filter(s=>s.door && !isGlass(s)).map(s=>s.door))].map(k=>L.find(s=>s.door===k && !isGlass(s)));
+  const nBis=doors.reduce((a,s)=>{ const h=s.b[3]-s.b[2]; return a+(h>=1500?4:h>=900?3:2); },0);
+  const nRiel=AREAS.armario.filter(a=>a.drawer).length, nHook=buildArmHw().filter(p=>/gancho/.test(p.n)).length/3;
+  const hw=[["Rieles push to open de 45 cm", `${nRiel} pares, uno por cajón × ${pesos(rU)} (entre el de 40 y el de 55)`, nRiel*rU],
+            ["Bisagras 897 clip 35 mm", `${nBis} para ${doors.length} puertas (4 en las de más de 1,5 m) × ${pesos(bU)}`, nBis*bU],
+            ...(nHook?[["Ganchos", `${nHook} para sombreros y bolsos (no estaban en la cotización)`, null]]:[]),
+            ...P.filter(x=>x.m==="armario"&&x.vidrio).map(x=>[x.n, `${x.d[0]/10} × ${x.d[1]/10} cm en vidriería (no estaba en la cotización)`, null])];
+  return {rows, hw, flete:COT.flete, sin:mat+COT.flete, con:mat+COT.flete+hw.reduce((a,r)=>a+(r[2]||0),0), est:1, falta:hw.filter(r=>r[2]==null).map(r=>r[0].toLowerCase())};
 }
 function costHTML(m){
   if(/^cama[2-5]$/.test(m)){
@@ -215,7 +223,7 @@ function costHTML(m){
     </div><p class="hint">El kit original ya lo tienes: esto es solo lo que se agrega o cambia.${m==="cama4"?" Los 2 laterales del kit (1690) sobran: sirven para repisas u otro mueble.":""}</p></div>`; }
   if(m==="cama") return `<div class="card cost"><h3 class="cuth">$ Costo</h3><p class="hint">La cama es un kit de fábrica (Tecnomobili IBIZA): su costo es el precio de la caja, no se calcula por tableros. Esto de abajo sirve como referencia si algún día la quisieras mandar a hacer en melamina.</p></div>`;
   const c = m==="armario" ? costArmario() : costReal(m);
-  const tr=r=>`<div class="srow"><span class="k">${esc(r[0])}</span><span class="v"><b class="mono">${pesos(r[2])}</b> <span class="hint">${esc(r[1])}</span></span></div>`;
+  const tr=r=>`<div class="srow"><span class="k">${esc(r[0])}</span><span class="v"><b class="mono">${r[2]==null?"cotizar":pesos(r[2])}</b> <span class="hint">${esc(r[1])}</span></span></div>`;
   return `<div class="card cost">
     <h3 class="cuth">$ Costo aprox. ${c.est?"estimado":""}</h3>
     <div class="cutstats">
@@ -227,7 +235,7 @@ function costHTML(m){
       <div class="srow"><span class="k" style="font-weight:800">Herrajes</span><span class="v hint">solo cuentan en "con herrajes"</span></div>
       ${c.hw.map(tr).join("")}</div>
     <p class="hint">${c.est
-      ? `Estimado con los precios de la cotización de Madecentro del ${COT.fecha} (tableros de ${COT.tablero}), con IVA y descuentos. ${CUT.fondos?"Incluye":"Sin"} los fondos de 6 mm. No incluye tubos de colgar, soportes ni patas (no estaban en la cotización).`
+      ? `Estimado con los precios de la cotización de Madecentro del ${COT.fecha} (tableros de ${COT.tablero}), con IVA y descuentos. ${CUT.fondos?"Incluye":"Sin"} los fondos de 6 mm. Se recalcula con el diseño actual cada vez que abres esta pestaña.${c.falta?.length?` El total no incluye ${c.falta.join(" ni ")} (dicen "cotizar").`:""} No incluye tubos de colgar, soportes ni patas (no estaban en la cotización).`
       : `Sale de la cotización de Madecentro del ${COT.fecha} (${pesos(COT.total)} por cocina + TV, con IVA y descuentos). Cada tablero se reparte según el área de piezas de cada mueble; bisagras y push to open, a partes iguales.`}</p>
   </div>`;
 }
