@@ -185,14 +185,18 @@ function costReal(m){
   const fl=COT.flete*mat/matAll;
   return {rows, hw, flete:fl, sin:mat+fl, con:mat+fl+hw.reduce((a,r)=>a+r[2],0)};
 }
-function costArmario(){
-  const cfg={BW:2440, BH:2150, kerf:CUT.kerf, trim:CUT.trim, rot:!CUT.veta, minFree:30, iters:40};
-  const g={}; P.filter(x=>x.m==="armario" && !x.vidrio).forEach(x=>{ const k=costMat(x); for(let i=0;i<x.q;i++)(g[k]=g[k]||[]).push({id:x.id,L:x.d[0],W:x.d[1]}); });
-  const rows=[]; let mat=0;
-  for(const k of ["milan","tivoli","t6"]){ if(!g[k] || (k==="t6" && !CUT.fondos)) continue;
-    const c=COT.mat[k], n=optimizeCut(g[k],cfg).sheets.length, a=costArea("armario",k), rate=c.extra/(costArea("cocina",k)+costArea("tv",k));
-    rows.push([c.n, `${n} tablero${n>1?"s":""} de ${COT.tablero} × ${pesos(c.board)}`, n*c.board], [`Cantos y servicios · ${c.s}`, `${fmt(a.toFixed(2))} m² × ${pesos(rate)}/m², lo que costó por m² en la cocina y el TV`, a*rate]);
-    mat+=n*c.board+a*rate; }
+// Usa los mismos tableros que muestra la pestaña (tamaño, veta, frentes aparte, fondos). El precio de la cotización es
+// por tablero de 2,15 × 2,44: con otro tamaño se ajusta por área.
+function costArmario(res, cfg){
+  const ref=2440*2150, f=(cfg.BW*cfg.BH)/ref, sep=cutSep("armario"), rows=[]; let mat=0;
+  const rateOf=k=>COT.mat[k].extra/(costArea("cocina",k)+costArea("tv",k));
+  for(const x of res){
+    const key = x.k==="fondo" ? "t6" : x.k==="frente" ? "tivoli" : "milan", c=COT.mat[key], price=c.board*f, a=x.area/1e6, rate=rateOf(key);
+    const name = x.k==="cuerpo" && !sep ? `${c.n} (frentes en el mismo tablero)` : c.n;
+    rows.push([name, `${x.n} tablero${x.n>1?"s":""} de ${cm(cfg.BW)} × ${cm(cfg.BH)} cm × ${pesos(price)}${f!==1?` (precio de 2,15 × 2,44 ajustado por área)`:""}`, x.n*price],
+              [`Cantos y servicios · ${c.s}`, `${fmt(a.toFixed(2))} m² × ${pesos(rate)}/m², lo que costó por m² en la cocina y el TV`, a*rate]);
+    mat+=x.n*price+a*rate;
+  }
   const rU=(COT.hw.r400.v/4 + COT.hw.r550.v/6)/2, bU=COT.hw.bis.v/COT.hw.bis.q;
   // herrajes contados del diseño actual: puertas → bisagras (4 si mide más de 1,5 m), cajones → pares de rieles, ganchos y espejos
   const L=buildModel("armario").filter(s=>!s.sub), isGlass=s=>!!byId[s.id]?.vidrio;
@@ -205,7 +209,7 @@ function costArmario(){
             ...P.filter(x=>x.m==="armario"&&x.vidrio).map(x=>[x.n, `${x.d[0]/10} × ${x.d[1]/10} cm en vidriería (no estaba en la cotización)`, null])];
   return {rows, hw, flete:COT.flete, sin:mat+COT.flete, con:mat+COT.flete+hw.reduce((a,r)=>a+(r[2]||0),0), est:1, falta:hw.filter(r=>r[2]==null).map(r=>r[0].toLowerCase())};
 }
-function costHTML(m){
+function costHTML(m, res, cfg){
   if(/^cama[2-5]$/.test(m)){
     const nu=P.filter(x=>x.m===m&&x.nueva), a=nu.filter(x=>x.d[2]===15).reduce((s,x)=>s+x.d[0]*x.d[1]*x.q,0)/1e6, rate=COT.mat.tivoli.extra/(costArea("cocina","tivoli")+costArea("tv","tivoli"));
     const rec=P.filter(x=>x.m===m&&x.recorte);
@@ -222,7 +226,7 @@ function costHTML(m){
       ${tr(["Herrajes del mecanismo","2 placas de acero de 4 mm por dentro + 2 contraplacas por fuera, 2 brazos, 2 escuadras bajo la cama, 2 ejes Ø20 con buje, 4 rótulas o pasadores, pernos M8 pasantes con arandela (taller de metalmecánica)","cotizar"])}
     </div><p class="hint">El kit original ya lo tienes: esto es solo lo que se agrega o cambia.${m==="cama4"?" Los 2 laterales del kit (1690) sobran: sirven para repisas u otro mueble.":""}</p></div>`; }
   if(m==="cama") return `<div class="card cost"><h3 class="cuth">$ Costo</h3><p class="hint">La cama es un kit de fábrica (Tecnomobili IBIZA): su costo es el precio de la caja, no se calcula por tableros. Esto de abajo sirve como referencia si algún día la quisieras mandar a hacer en melamina.</p></div>`;
-  const c = m==="armario" ? costArmario() : costReal(m);
+  const c = m==="armario" ? costArmario(res, cfg) : costReal(m);
   const tr=r=>`<div class="srow"><span class="k">${esc(r[0])}</span><span class="v"><b class="mono">${r[2]==null?"cotizar":pesos(r[2])}</b> <span class="hint">${esc(r[1])}</span></span></div>`;
   return `<div class="card cost">
     <h3 class="cuth">$ Costo aprox. ${c.est?"estimado":""}</h3>
@@ -235,7 +239,7 @@ function costHTML(m){
       <div class="srow"><span class="k" style="font-weight:800">Herrajes</span><span class="v hint">solo cuentan en "con herrajes"</span></div>
       ${c.hw.map(tr).join("")}</div>
     <p class="hint">${c.est
-      ? `Estimado con los precios de la cotización de Madecentro del ${COT.fecha} (tableros de ${COT.tablero}), con IVA y descuentos. ${CUT.fondos?"Incluye":"Sin"} los fondos de 6 mm. Se recalcula con el diseño actual cada vez que abres esta pestaña.${c.falta?.length?` El total no incluye ${c.falta.join(" ni ")} (dicen "cotizar").`:""} No incluye tubos de colgar, soportes ni patas (no estaban en la cotización).`
+      ? `Estimado con los precios de la cotización de Madecentro del ${COT.fecha}, con IVA y descuentos, sobre los mismos tableros de abajo: cambia con el tamaño de tablero, la veta, los frentes aparte y los fondos. ${CUT.fondos?"Incluye":"Sin"} los fondos de 6 mm.${c.falta?.length?` El total no incluye ${c.falta.join(" ni ")} (dicen "cotizar").`:""} No incluye tubos de colgar, soportes ni patas (no estaban en la cotización).`
       : `Sale de la cotización de Madecentro del ${COT.fecha} (${pesos(COT.total)} por cocina + TV, con IVA y descuentos). Cada tablero se reparte según el área de piezas de cada mueble; bisagras y push to open, a partes iguales.`}</p>
   </div>`;
 }
@@ -288,7 +292,7 @@ function renderCut(){
     });
     h+=`</div>`;
   });
-  h=h.replace('<div class="card cutgrp">', costHTML(m)+'<div class="card cutgrp">');
+  h=h.replace('<div class="card cutgrp">', costHTML(m, res, cfg)+'<div class="card cutgrp">');
   $("#cutBody").innerHTML=h;
   $("#cutBody").querySelectorAll("[data-id]").forEach(el=>{ el.onclick=()=>openPiece(el.dataset.id); if(el.tagName==="g") el.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openPiece(el.dataset.id); } }; });
   $("#cutBody").querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>cutCopy(b.dataset.copy));
