@@ -78,6 +78,15 @@ for(const m of ["cama3","cama4"]){ const p=CAMA_CFG[m].pre;
     {k:p+"plat", n:"Base y marco de la cama", t:s=>[p+"lastroc",p+"lastrol",p+"barra",p+"cab"].includes(s.id)},
     {k:p+"nicho", n:"Repisa bajo la cama (pata al abrirla)", t:s=>s.zone==="nicho"}];
 }
+for(const [m,V] of Object.entries(ARM_V)){ const p=V.pre, nD=V.zonas.find(z=>z.k==="D").n;
+  AREAS[m]=[...Array.from({length:nD},(_,j)=>({k:p+"d"+j, n:`Cajón ${j+1}${j===0?" (abajo)":j===nD-1?" (arriba)":""}`, t:s=>s.g===p+"d"+j, drawer:1})),
+    {k:p+"h1", n:"Colgador de abrigos", t:s=>s.zone==="h1"},
+    {k:p+"h2", n:"Colgador doble", t:s=>s.zone==="h2"},
+    {k:p+"zd", n:"Columna de cajones", t:s=>s.zone==="d"},
+    {k:p+"lat", n:"Columna lateral con espejo", t:s=>s.zone==="lat"},
+    {k:p+"est", n:"Estructura", t:s=>s.zone==="est"},
+    {k:p+"front", n:"Puertas y frentes", t:s=>!!s.front}];
+}
 const AREA_BY_KEY = {}; Object.entries(AREAS).forEach(([m,l])=>l.forEach(a=>AREA_BY_KEY[a.k]={...a,m}));
 let _areaIdx=null;
 function areaIndex(){ // id de pieza -> [{k, n, c}] en qué conjuntos aparece y cuántas
@@ -127,6 +136,7 @@ function go3DArea(k){ const a=AREA_BY_KEY[k]; if(!a) return; if($("#dlg").open) 
    Cajas en mm: [x0,x1, y0,y1, z0,z1]; x = ancho (izq→der), y = alto, z = fondo (atrás 0 → frente).
    Posiciones deducidas de las cotas del plano; los listones de refuerzo de la cocina son aproximados. */
 function buildModel(m){
+  if(ARM_V[m]) return armVSpecs(m);
   const L=[]; const add=(id,b,o={})=>L.push({id,b,...o});
   if(m==="cocina"){
     add("c-base",[0,1940,0,15,0,580]);
@@ -393,7 +403,8 @@ function buildElec(){
   return P;
 }
 // Herrajes del armario que no son piezas de madera: tubos de colgar y patas de 6 cm.
-function buildArmHw(){
+function buildArmHw(m="armario"){
+  if(ARM_V[m]) return armVHw(m);
   const P=[], part=(b,c,n)=>P.push({b,c,n,id:"__herraje"}), Y=60, steel="#9aa0a6";
   part([20,349.7,1888+Y,1912+Y,245,269],steel,"tubo");              // izquierdo, bajo la repisa de arriba
   part([374.7,1150.5,1180+Y,1204+Y,245,269],steel,"tubo");          // central

@@ -22,17 +22,19 @@ const ASSETS = {
   "cocina": "assets/planos/vista-cocina.jpg",
   "tv": "assets/planos/vista-tv.jpg",
   "armario": "assets/planos/vista-armario.jpg",
+  "armc": "assets/planos/vista-armario.jpg",
+  "arma": "assets/planos/vista-armario.jpg",
   "cama": "assets/planos/vista-cama.jpg",
   "cama2": "assets/planos/vista-cama.jpg"
  }
 };
 const BUBBLES = {"1": [["3", 8.05, 44.88], ["11", 18.84, 44.88], ["8", 26.88, 38.23], ["7", 29.5, 23.9], ["5", 32.74, 53.55], ["6", 31.9, 31.66], ["8", 36.99, 38.71], ["10", 40.43, 43.98], ["9", 44.98, 29.08], ["2", 49.81, 35.11], ["1", 50.88, 24.36], ["10", 53.85, 39.96], ["10", 54.66, 39.12], ["4", 83.76, 83.02]], "2": [["6", 22.29, 51.49], ["2", 22.72, 29.44], ["1", 28.85, 41.27], ["4", 32.98, 35.49], ["5", 37.14, 28.19], ["3", 43.27, 40.03], ["6", 59.41, 81.95], ["2", 56.64, 72.38], ["1", 62.93, 74.35]], "3": [["3", 22.85, 69.33], ["3", 22.85, 39.96], ["3", 22.85, 57.42], ["8", 22.85, 24.77], ["5", 27.19, 71.07], ["5", 27.71, 26.78], ["5", 28.03, 42.16], ["5", 27.91, 59.42], ["1", 32.62, 66.47], ["1", 31.03, 36.42], ["1", 31.03, 53.89], ["6", 31.03, 21.22], ["4", 32.62, 72.78], ["4", 32.62, 43.41], ["4", 32.62, 60.89], ["9", 32.62, 28.21], ["1", 69.31, 86.27], ["1", 69.31, 74.17], ["1", 69.31, 78.2], ["1", 69.31, 82.23]], "5": [["3", 23.15, 34.68], ["6", 25.81, 55.3], ["2", 30.8, 45.89], ["5", 35.1, 39.5], ["1", 39.41, 30.35], ["4", 47.05, 41.56]], "7": [["2", 13.57, 52.42], ["2", 25.14, 50.16], ["2", 35.1, 48.23], ["1", 41.1, 50.75], ["2", 45.05, 46.31], ["2", 55.02, 44.38], ["2", 64.98, 42.44]], "8": [["2", 11.46, 48.69], ["1", 26.1, 44.0], ["6", 33.34, 45.51], ["4", 37.09, 56.43], ["4", 37.09, 30.87], ["1", 40.04, 41.56], ["5", 62.97, 78.36], ["1", 55.49, 40.19], ["3", 62.71, 38.59]], "9": [["2", 19.91, 65.22], ["2", 19.91, 30.73], ["2", 20.92, 46.52], ["4", 27.29, 67.48], ["4", 27.79, 34.14], ["4", 27.48, 51.37], ["1", 30.66, 64.25], ["1", 30.66, 29.75], ["1", 30.66, 47.0], ["3", 35.05, 72.01], ["3", 35.05, 37.51], ["3", 35.05, 54.76], ["2", 66.13, 86.61], ["2", 66.13, 77.94], ["2", 66.13, 82.27], ["1", 79.59, 78.63], ["1", 83.37, 77.62]], "10": [["6", 23.89, 57.16], ["3", 26.2, 29.28], ["5", 35.73, 37.34], ["1", 38.34, 27.43], ["4", 45.75, 37.1], ["6", 73.7, 83.54]], "B1": [["01", 27.83, 86.45], ["02", 31.24, 85.23], ["03", 35.2, 86.19], ["02", 37.67, 86.44], ["02", 39.61, 85.22], ["05", 33.7, 82.98], ["06", 34.69, 76.36], ["07", 38.28, 79.27], ["07", 39.52, 74.47], ["08", 37.61, 72.06], ["08", 29.96, 79.38], ["09", 26.5, 74.34], ["09", 45.73, 78.67], ["10", 29.26, 57.6], ["11", 39.3, 57.13], ["12", 40.38, 54.0], ["13", 49.83, 57.77], ["14", 36.35, 51.26], ["14", 42.67, 52.24], ["15", 39.71, 48.63], ["16", 39.38, 51.11]]};
 const PAGES = ASSETS.pages, HEROES = ASSETS.heroes;
-const MUEBLE = {cocina:"Mueble Cocina", tv:"Mueble TV", armario:"Armario", cama:"Cama abatible", cama2:"Cama con pistones", cama3:"Cama eléctrica", cama4:"Cama vertical", cama5:"Cama con escritorio"};
-const SHORT = {cocina:"Cocina", tv:"TV", armario:"Armario", cama:"Cama", cama2:"Cama + pistones", cama3:"Cama eléctrica", cama4:"Cama vertical", cama5:"Cama + escritorio"};
-const ICON = {cocina:"i-pot", tv:"i-tv", armario:"i-ward", cama:"i-bed", cama2:"i-bed", cama3:"i-bed", cama4:"i-bed", cama5:"i-bed"};
-const MUEBLES = ["cocina","tv","armario","cama","cama2","cama3","cama4","cama5"];
-const CHECK_M = MUEBLES.filter(m=>!/^cama[2-5]$/.test(m));   // las variantes de la cama son diseños: no entran en el conteo
+const MUEBLE = {cocina:"Mueble Cocina", tv:"Mueble TV", armario:"Armario", armc:"Armario C · cajones junto al espejo", arma:"Armario A · cajones al centro", cama:"Cama abatible", cama2:"Cama con pistones", cama3:"Cama eléctrica", cama4:"Cama vertical", cama5:"Cama con escritorio"};
+const SHORT = {cocina:"Cocina", tv:"TV", armario:"Armario", armc:"Armario C", arma:"Armario A", cama:"Cama", cama2:"Cama + pistones", cama3:"Cama eléctrica", cama4:"Cama vertical", cama5:"Cama + escritorio"};
+const ICON = {cocina:"i-pot", tv:"i-tv", armario:"i-ward", armc:"i-ward", arma:"i-ward", cama:"i-bed", cama2:"i-bed", cama3:"i-bed", cama4:"i-bed", cama5:"i-bed"};
+const MUEBLES = ["cocina","tv","armario","armc","arma","cama","cama2","cama3","cama4","cama5"];
+const CHECK_M = MUEBLES.filter(m=>!/^cama[2-5]$/.test(m) && !ARM_V[m]);   // las variantes de la cama son diseños: no entran en el conteo
 const INF_NOTE = "Despiece inferido de los planos generales (Madecentro no incluyó tabla de piezas): confirma con la etiqueta.";
 const PAGE_TITLE = {B1:"Lista de piezas y vista explotada",B2:"Paso 1: tarugos y minifix",B3:"Pasos 2–5: repisa y base de la cama",B4:"Pasos 6–9: marco de la cama y mueble",B5:"Pasos 10–12: tapa, trasera y eje de la cama",B6:"Pasos 13–14: cerraduras, deslizadores y uso",A1:"Planos generales (medidas)",A2:"Planos generales (puertas y cajones)",1:"Estructura del mueble",2:"Cajón grande y puertas",3:"4 cajones de la columna",5:"Cajón bajo (encima del horno)",7:"Zócalo",8:"Estructura del mueble",9:"3 cajones, frentes y puertas",10:"Cajón grande del centro"};
 // d = [largo, ancho, grosor] mm · it = ítem en el plano · q = cantidad · p = página del PDF
@@ -197,6 +199,7 @@ for(const [m,v] of Object.entries(CAMA_VAR)){
   });
   (v.add||[]).forEach(a=>{ P.push({m, p:"B1", ids:a.nueva?"nueva":"recorte", ...a}); PLAN_NAMES[a.id]=[a.n+" (diseño)",""]; });
 }
+for(const m of Object.keys(ARM_V)) armVPieces(m).forEach(x=>{ P.push(x); PLAN_NAMES[x.id]=["(propuesta de diseño, sin plano)",""]; });
 P.forEach(x=>{ const v=PLAN_NAMES[x.id]; x.pl=v?.[0]||(x.inf?"(el plano no trae despiece)":x.n); x.stk=v?.[1]||""; });
 function namesHTML(x){
   const seen=(STATE[x.id]?.codes||[]).filter(Boolean);

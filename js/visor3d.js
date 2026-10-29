@@ -8,7 +8,9 @@ const WOOD = {
   cama4:{carc:"#e3ddd2", front:"#e3ddd2", thin:"#cfc6b6", box:"#d6cebf", cantos:1},
   cocina:{carc:"#e6dac3", front:"#f1e9da", thin:"#c9bda6", box:"#ddd0b8"},
   tv:{carc:"#5e4330", front:"#ece3d3", thin:"#cbbfa9", box:"#d9cdb8"},
-  armario:{carc:"#5a4030", front:"#ece2cf", thin:"#c9bda6", box:"#6b4d38", cantos:1}
+  armario:{carc:"#5a4030", front:"#ece2cf", thin:"#c9bda6", box:"#6b4d38", cantos:1},
+  armc:{carc:"#5a4030", front:"#ece2cf", thin:"#c9bda6", box:"#6b4d38", cantos:1},
+  arma:{carc:"#5a4030", front:"#ece2cf", thin:"#c9bda6", box:"#6b4d38", cantos:1}
 };
 const CANTO_CLARO="#ece2cf", CANTO_OSCURO="#4a3426";
 function lum(hex){ const c=new THREE.Color(hex); return c.r*.3+c.g*.59+c.b*.11; }
@@ -94,7 +96,7 @@ function load3D(m){
     group.add(mesh); meshes.push(mesh);
   });
   const extras=[];
-  (m==="cocina" ? buildOven().concat(buildElec(),buildGas()) : m==="armario" ? buildArmHw() : m==="cama" ? buildCamaHw() : CAMA_CFG[m] ? buildCamaHw(m).concat(MECS[m]?buildMec(m):[], CAMA_CFG[m].desk?buildDeskHw():[]) : []).forEach(o=>{
+  (m==="cocina" ? buildOven().concat(buildElec(),buildGas()) : (m==="armario"||ARM_V[m]) ? buildArmHw(m) : m==="cama" ? buildCamaHw() : CAMA_CFG[m] ? buildCamaHw(m).concat(MECS[m]?buildMec(m):[], CAMA_CFG[m].desk?buildDeskHw():[]) : []).forEach(o=>{
     const b=o.b; let geo;
     if(o.k==="xcyl"){ geo=new THREE.CylinderGeometry(o.r*S,o.r*S,(b[1]-b[0])*S,24); geo.rotateZ(Math.PI/2); }
     else if(o.k==="sph") geo=new THREE.SphereGeometry(o.r*S,18,12);
@@ -128,7 +130,7 @@ function resetCam(){
   cam.position.copy(V3.controls.target).addScaledVector(dir,dist);
   V3.controls.maxDistance=dist*2.2; V3.controls.update();
 }
-const DOORS = {cama5:[{k:"cama",n:"Cama (bajar / subir)"}], cama:[{k:"cama",n:"Cama (bajar / subir)"}], cama2:[{k:"cama",n:"Cama (bajar / subir)"}], cama3:[{k:"cama",n:"Cama (bajar / subir)"}], cama4:[{k:"cama",n:"Cama (bajar / subir)"}], armario:[{k:"a-p5",n:"Puerta lateral (espejo)"},{k:"a-p1",n:"Puerta 1 (izquierda)"},{k:"a-p2",n:"Puerta 2"},{k:"a-p3",n:"Puerta 3"},{k:"a-p4",n:"Puerta 4 (derecha)"}], cocina:[{k:"c-pi",n:"Puerta izquierda (412)"},{k:"c-pd",n:"Puerta derecha (404,5)"}], tv:[{k:"t-pi",n:"Puerta izquierda de la despensa"},{k:"t-pd",n:"Puerta derecha de la despensa"}]};
+const DOORS = {...Object.fromEntries(Object.entries(ARM_V).map(([m,V])=>[m,[{k:V.pre+"p9",n:"Puerta lateral (espejo)"},...V.zonas.map((z,i)=>({k:V.pre+"p"+i,n:z.k==="D"?"Puerta de arriba de los cajones":z.k==="H1"?"Puerta del colgador de abrigos":"Puerta del colgador doble"}))]])), cama5:[{k:"cama",n:"Cama (bajar / subir)"}], cama:[{k:"cama",n:"Cama (bajar / subir)"}], cama2:[{k:"cama",n:"Cama (bajar / subir)"}], cama3:[{k:"cama",n:"Cama (bajar / subir)"}], cama4:[{k:"cama",n:"Cama (bajar / subir)"}], armario:[{k:"a-p5",n:"Puerta lateral (espejo)"},{k:"a-p1",n:"Puerta 1 (izquierda)"},{k:"a-p2",n:"Puerta 2"},{k:"a-p3",n:"Puerta 3"},{k:"a-p4",n:"Puerta 4 (derecha)"}], cocina:[{k:"c-pi",n:"Puerta izquierda (412)"},{k:"c-pd",n:"Puerta derecha (404,5)"}], tv:[{k:"t-pi",n:"Puerta izquierda de la despensa"},{k:"t-pd",n:"Puerta derecha de la despensa"}]};
 const DOOR_ANGLE = 100*Math.PI/180;
 const DOOR_FOR = {"a-p4":/^ai/}; // puerta que hay que abrir para sacar esos cajones
 // V3.pos[k] = 0..1 (0 cerrado, 1 abierto). Si no hay valor, manda el estado abierto/cerrado de siempre.
@@ -331,6 +333,15 @@ function renderInfo3D(){
   }
   if(V3.sel==="__herraje"){
     tag.hidden=false; tag.innerHTML=`<b>Herrajes del armario</b><span class="dims">no son piezas de madera</span>`; tag.onclick=null;
+    if(ARM_V[V3.m]){ const h=armHwCount(V3.m);
+      el.innerHTML=`<div class="v3sel"><div class="v3name">Herrajes</div><div class="spec">
+        <div class="srow"><span class="k">Tubos de colgar</span><span class="v">${h.tubos}: 1 a 1,95 m en el colgador de abrigos y 2 en el doble (a 1,95 m y a 1,02 m).</span></div>
+        <div class="srow"><span class="k">Bisagras</span><span class="v">${h.bis} para ${h.puertas} puertas: 5 en las de piso a techo y en la lateral del espejo.</span></div>
+        <div class="srow"><span class="k">Rieles</span><span class="v">${h.rieles} pares push to open de 45 cm, todos iguales (un cajón = un par).</span></div>
+        <div class="srow"><span class="k">Ganchos</span><span class="v">${h.ganchos} en la columna lateral: 2 para sombreros y 3 para bolsos.</span></div>
+        <div class="srow"><span class="k">Patas</span><span class="v">6 de 6 cm.</span></div>
+      </div><div class="row"><button class="btn sm" type="button" id="v3clear">Quitar selección</button></div></div>`;
+      $("#v3clear").onclick=()=>select3D(null); return; }
     el.innerHTML=`<div class="v3sel"><div class="v3name">Herrajes</div><div class="spec">
       <div class="srow"><span class="k">Tubos de colgar</span><span class="v">2: uno de ~330 mm en el módulo izquierdo (bajo la repisa de arriba) y uno de ~776 mm en el central.</span></div>
       <div class="srow"><span class="k">Patas</span><span class="v">De 6 cm, como dice el plano. En el 3D van 6 (esquinas y centro); el número real depende del kit.</span></div>

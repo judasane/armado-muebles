@@ -17,7 +17,7 @@ App web para armar muebles de melamina pieza por pieza: identificas cada pieza p
 | **Planos** | Los planos originales con el ítem marcado. |
 | **Checklist** | Cuántas piezas de cada una ya encontraste. |
 
-**Muebles:** cocina y TV (despiece de Madecentro), armario (despiece inferido de los planos), cama abatible IBIZA (Tecnomobili CM-8043) y 4 variantes de diseño de la cama: con pistones, eléctrica, vertical y con escritorio que siempre queda horizontal.
+**Muebles:** cocina y TV (despiece de Madecentro), armario (despiece inferido de los planos) y 2 propuestas con los cajones en una columna (A y C), cama abatible IBIZA (Tecnomobili CM-8043) y 4 variantes de diseño de la cama: con pistones, eléctrica, vertical y con escritorio que siempre queda horizontal.
 
 Pensada para personas daltónicas: nada se distingue solo por el color (siempre hay ícono, palabra, patrón o diferencia de luminancia).
 
@@ -51,6 +51,7 @@ node tools/sellar.mjs            # después de cambiar css/ o js/: actualiza los
 ```
 index.html          marcado de la app (pestañas, visor, diálogos) y orden de carga de los scripts
 css/app.css         estilos (tema claro y oscuro)
+js/armarios.js      propuestas de armario (geometría por zonas; el despiece se deriva de ella)
 js/catalogo.js      piezas (P), nombres en el plano, marcas de los planos, variantes de la cama
 js/ui.js            checklist, ficha de pieza, búsqueda por medidas, escaneo, despiece, planos
 js/modelo.js        geometría de cada mueble en mm (sin three.js), conjuntos, herrajes y mecanismos

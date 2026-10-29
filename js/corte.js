@@ -77,7 +77,7 @@ const MATERIALES = {
 const MAT_ELEGIBLES = ["milan","tivoli","wengue"];
 let MATSEL = {};
 try{ MATSEL = JSON.parse(localStorage.getItem(LS+"-mat")||"{}")||{}; }catch{}
-const canPickMat = x => !!x && ["cocina","tv","armario"].includes(x.m) && !x.vidrio && (x.cut||x.d)[2]>6;
+const canPickMat = x => !!x && (["cocina","tv","armario"].includes(x.m) || !!ARM_V[x.m]) && !x.vidrio && (x.cut||x.d)[2]>6;
 // material por defecto: el del diseño (frentes y cajas según el color de cada mueble), o todo el mismo si los frentes no van aparte
 function defMat(x){
   if((x.cut||x.d)[2]<=6) return "t6";
@@ -225,8 +225,15 @@ function costReal(m){
 }
 // Usa los mismos tableros que muestra la pestaña (tamaño, veta, frentes aparte, fondos). El precio de la cotización es
 // por tablero de 2,15 × 2,44: con otro tamaño se ajusta por área.
-function costArmario(res, cfg){
-  const ref=2440*2150, f=(cfg.BW*cfg.BH)/ref, sep=cutSep("armario"), rows=[]; let mat=0;
+// bisagras por alto (5 si pasa de 1,9 m), un par de rieles por cajón, ganchos y tubos: del modelo actual
+function armHwCount(m){
+  const L=buildModel(m).filter(s=>!s.sub), isGlass=s=>!!byId[s.id]?.vidrio, hw=buildArmHw(m);
+  const doors=[...new Set(L.filter(s=>s.door && !isGlass(s)).map(s=>s.door))].map(k=>L.find(s=>s.door===k && !isGlass(s)));
+  return {puertas:doors.length, bis:doors.reduce((a,s)=>{ const h=s.b[3]-s.b[2]; return a+(h>=1900?5:h>=1500?4:h>=900?3:2); },0),
+    rieles:AREAS[m].filter(a=>a.drawer).length, ganchos:hw.filter(p=>/gancho/.test(p.n)).length/3, tubos:hw.filter(p=>/tubo/.test(p.n)).length};
+}
+function costArmario(res, cfg, m="armario"){
+  const ref=2440*2150, f=(cfg.BW*cfg.BH)/ref, rows=[]; let mat=0;
   const rateOf=k=>k==="wengue" ? rateOf("milan") : COT.mat[k].extra/(costArea("cocina",k)+costArea("tv",k));
   for(const x of res){
     const key = COT.mat[x.k] ? x.k : x.k==="fondo" ? "t6" : x.k==="frente" ? "tivoli" : "milan", c=COT.mat[key], price=c.board*f, a=x.area/1e6, rate=rateOf(key);
@@ -237,14 +244,11 @@ function costArmario(res, cfg){
   }
   const rU=(COT.hw.r400.v/4 + COT.hw.r550.v/6)/2, bU=COT.hw.bis.v/COT.hw.bis.q;
   // herrajes contados del diseño actual: puertas → bisagras (4 si mide más de 1,5 m), cajones → pares de rieles, ganchos y espejos
-  const L=buildModel("armario").filter(s=>!s.sub), isGlass=s=>!!byId[s.id]?.vidrio;
-  const doors=[...new Set(L.filter(s=>s.door && !isGlass(s)).map(s=>s.door))].map(k=>L.find(s=>s.door===k && !isGlass(s)));
-  const nBis=doors.reduce((a,s)=>{ const h=s.b[3]-s.b[2]; return a+(h>=1500?4:h>=900?3:2); },0);
-  const nRiel=AREAS.armario.filter(a=>a.drawer).length, nHook=buildArmHw().filter(p=>/gancho/.test(p.n)).length/3;
+  const H=armHwCount(m), nBis=H.bis, nRiel=H.rieles, nHook=H.ganchos, doors={length:H.puertas};
   const hw=[["Rieles push to open de 45 cm", `${nRiel} pares, uno por cajón × ${pesos(rU)} (entre el de 40 y el de 55)`, nRiel*rU],
-            ["Bisagras 897 clip 35 mm", `${nBis} para ${doors.length} puertas (4 en las de más de 1,5 m) × ${pesos(bU)}`, nBis*bU],
+            ["Bisagras 897 clip 35 mm", `${nBis} para ${doors.length} puertas (5 en las de piso a techo, 4 en las de más de 1,5 m) × ${pesos(bU)}`, nBis*bU],
             ...(nHook?[["Ganchos", `${nHook} para sombreros y bolsos (no estaban en la cotización)`, null]]:[]),
-            ...P.filter(x=>x.m==="armario"&&x.vidrio).map(x=>[x.n, `${x.d[0]/10} × ${x.d[1]/10} cm en vidriería (no estaba en la cotización)`, null])];
+            ...P.filter(x=>x.m===m&&x.vidrio).map(x=>[x.n, `${x.d[0]/10} × ${x.d[1]/10} cm en vidriería (no estaba en la cotización)`, null])];
   return {rows, hw, flete:COT.flete, sin:mat+COT.flete, con:mat+COT.flete+hw.reduce((a,r)=>a+(r[2]||0),0), est:1, falta:hw.filter(r=>r[2]==null).map(r=>r[0].toLowerCase())};
 }
 function costHTML(m, res, cfg){
@@ -264,7 +268,7 @@ function costHTML(m, res, cfg){
       ${tr(["Herrajes del mecanismo","2 placas de acero de 4 mm por dentro + 2 contraplacas por fuera, 2 brazos, 2 escuadras bajo la cama, 2 ejes Ø20 con buje, 4 rótulas o pasadores, pernos M8 pasantes con arandela (taller de metalmecánica)","cotizar"])}
     </div><p class="hint">El kit original ya lo tienes: esto es solo lo que se agrega o cambia.${m==="cama4"?" Los 2 laterales del kit (1690) sobran: sirven para repisas u otro mueble.":""}</p></div>`; }
   if(m==="cama") return `<div class="card cost"><h3 class="cuth">$ Costo</h3><p class="hint">La cama es un kit de fábrica (Tecnomobili IBIZA): su costo es el precio de la caja, no se calcula por tableros. Esto de abajo sirve como referencia si algún día la quisieras mandar a hacer en melamina.</p></div>`;
-  const c = m==="armario" ? costArmario(res, cfg) : costReal(m);
+  const c = (m==="armario"||ARM_V[m]) ? costArmario(res, cfg, m) : costReal(m);
   const tr=r=>`<div class="srow"><span class="k">${esc(r[0])}</span><span class="v"><b class="mono">${r[2]==null?"cotizar":pesos(r[2])}</b> <span class="hint">${esc(r[1])}</span></span></div>`;
   return `<div class="card cost">
     <h3 class="cuth">$ Costo aprox. ${c.est?"estimado":""}</h3>

@@ -47,6 +47,8 @@ svg.i{width:1.15em;height:1.15em;flex:none;stroke:currentColor;fill:none;stroke-
 .mtag{display:inline-flex;align-items:center;gap:5px;padding:3px 9px 3px 7px;border-radius:999px;font:700 .74rem var(--body);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}
 .mtag.cocina,.mbg.cocina{background:var(--cocina);color:var(--cocina-ink)}
 .mtag.armario,.mbg.armario{background:radial-gradient(circle,var(--arm-dot) 1.6px,transparent 1.8px) 0 0/8px 8px,var(--arm);color:var(--arm-ink)}
+.mtag.armc,.mbg.armc{background:repeating-linear-gradient(90deg,var(--arm) 0 6px,var(--arm-dot) 6px 8px);color:var(--arm-ink)}
+.mtag.arma,.mbg.arma{background:repeating-linear-gradient(0deg,var(--arm) 0 6px,var(--arm-dot) 6px 8px);color:var(--arm-ink)}
 .mtag.cama3,.mbg.cama3{background:repeating-linear-gradient(45deg,var(--cama) 0 5px,var(--cama-stripe) 5px 8px);color:var(--cama-ink)}
 .mtag.cama4,.mbg.cama4{background:radial-gradient(circle,var(--cama-stripe) 1.8px,transparent 2px) 0 0/7px 7px,var(--cama);color:var(--cama-ink)}
 .mtag.cama5,.mbg.cama5{background:repeating-linear-gradient(0deg,var(--cama) 0 4px,var(--cama-stripe) 4px 6px),var(--cama);background-size:100% 100%;outline:2px dashed var(--cama-stripe);outline-offset:-3px;color:var(--cama-ink)}

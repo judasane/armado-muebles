@@ -11,7 +11,7 @@ App de una página, en español de Colombia, para armar muebles de melamina (Mad
 1. **Daltonismo:** nada puede distinguirse solo por el color. Cada estado o categoría lleva ícono, palabra, patrón (rayas, puntos) o una diferencia clara de luminancia. Estados con forma: `○ ◐ ●`, `✓ ! ✕`. Los acentos son azul y ámbar.
 2. **Sin datos personales.** Ni nombres de clientes, teléfonos, cédulas, direcciones ni correos, tampoco dentro de las imágenes de los planos (los membretes de Madecentro los traen: hay que taparlos antes de agregar una imagen). `tools/check.mjs` busca celulares y correos en el código; las imágenes hay que revisarlas a ojo.
 3. **Funciona sin Claude.** `window.claude.use("sample")` (leer etiquetas con foto) y `window.claude.use("db")` (checklist compartido) solo existen dentro de claude.ai. Todo lo demás tiene que andar igual en GitHub Pages; el checklist cae a `localStorage` (siempre envuelto en `try/catch`).
-4. **Sin paso de compilación.** Scripts clásicos (no módulos) que comparten el ámbito global; **el orden de `<script>` en `index.html` importa**: `catalogo → ui → modelo → visor3d → medidor → corte → arranque`. Una constante solo se puede usar al cargar si está en un archivo anterior; dentro de funciones da igual.
+4. **Sin paso de compilación.** Scripts clásicos (no módulos) que comparten el ámbito global; **el orden de `<script>` en `index.html` importa**: `armarios → catalogo → ui → modelo → visor3d → medidor → corte → arranque`. Una constante solo se puede usar al cargar si está en un archivo anterior; dentro de funciones da igual.
 5. **Después de tocar `css/` o `js/`, corre `node tools/sellar.mjs`** (pone `?v=<huella>` en `index.html` para que GitHub Pages no mezcle archivos viejos y nuevos) y luego **`node tools/check.mjs`**, que debe terminar en "Todo bien." (también revisa el sellado).
 
 ## Lenguaje
@@ -61,6 +61,10 @@ Las funciones de `buildOven/buildElec/buildGas/buildArmHw/buildCamaHw/buildMec/b
 ### Materiales por pieza — `js/corte.js`
 
 `MATERIALES` (Milán, Tivoli, Wengue, fondos de 6 mm) con color y nombre; `COT.mat` tiene el precio de cada uno. El material por defecto sale de `defMat(x)`; la persona puede cambiarlo por pieza (ficha, 3D y la lista "Material por pieza" de Corte) y queda en `MATSEL` (`localStorage`, clave `LS+"-mat"`). `matOf(x)` da el efectivo. Para cocina, TV y armario los tableros de Corte se agrupan por material y el costo del armario se calcula sobre esos mismos tableros; las camas siguen con su kit.
+
+### Propuestas de armario — `js/armarios.js`
+
+`ARM_V[m]` describe cada propuesta como una lista de zonas de izquierda a derecha (`H1` colgador de abrigos, `H2` colgador doble, `D` columna de cajones con `n` cajones iguales) más la columna lateral del espejo. `armVSpecs(m)` arma la geometría y `armVPieces(m)` **deriva el despiece de esa geometría** (medidas y cantidades), así que no hay que escribir el catálogo a mano: para una propuesta nueva basta agregar una entrada en `ARM_V` y sus textos en `armVDef`. Sus piezas llevan `var:1` (no salen en la búsqueda por medidas) y no cuentan en el checklist.
 
 ### Visor — `js/visor3d.js`
 

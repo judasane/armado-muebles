@@ -21,9 +21,9 @@ if (!fails) ok("js/*.js sin errores de sintaxis");
 
 // Carga catálogo + modelo (sin DOM ni three.js) en un contexto aislado
 const ctx = vm.createContext({ console, document: { querySelector: () => null }, localStorage: { getItem: () => null, setItem() {} } });
-const src = ["catalogo.js", "modelo.js"].map(f => readFileSync(path.join(root, "js", f), "utf8")).join("\n")
+const src = ["armarios.js", "catalogo.js", "modelo.js"].map(f => readFileSync(path.join(root, "js", f), "utf8")).join("\n")
   .replace(/^const /gm, "var ").replace(/^let /gm, "var ");
-vm.runInContext(src + "\n;globalThis.__ = {P, MUEBLES, buildModel, CAMA_CFG, MECS, buildCamaHw, buildMec, buildDeskHw, bedClosedBox, deskClosedBox, deskDelta, BED_PIVOT};", ctx);
+vm.runInContext(src + "\n;globalThis.__ = {ARM_V, P, MUEBLES, buildModel, CAMA_CFG, MECS, buildCamaHw, buildMec, buildDeskHw, bedClosedBox, deskClosedBox, deskDelta, BED_PIVOT};", ctx);
 const { P, MUEBLES, buildModel, CAMA_CFG, MECS, buildCamaHw, buildMec, buildDeskHw, bedClosedBox, deskClosedBox, deskDelta, BED_PIVOT } = ctx.__;
 
 const ov = (a, b) => { const d = [0, 2, 4].map(i => Math.min(a[i + 1], b[i + 1]) - Math.max(a[i], b[i])); return d.every(v => v > 0.5) ? d.map(v => Math.round(v)) : null; };
@@ -50,7 +50,7 @@ if (!fails) ok("todas las piezas coinciden");
 
 console.log("3. Choques (cocina, TV, armario: cerrado y con los cajones abiertos)");
 let before = fails;
-for (const m of ["cocina", "tv", "armario"]) {
+for (const m of ["cocina", "tv", "armario", ...Object.keys(ctx.__.ARM_V)]) {
   const L = buildModel(m);
   for (const open of [false, true]) {
     // con los cajones abiertos, las puertas también (en la app la puerta 4 del armario se abre sola con sus cajones)
